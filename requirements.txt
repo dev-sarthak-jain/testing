@@ -1,0 +1,11 @@
+streamlit
+langchain
+langchain_core
+pandas
+langchain_google_genai
+pdfplumber
+pandas
+dotenv
+ipython
+python-dotenv
+openpyxl
