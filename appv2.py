@@ -300,14 +300,19 @@ def determine_underwriting_requirements(customer_data):
 
 
 
+import io
+import time
+import pandas as pd
+import streamlit as st
+
 def process_uploaded_file(uploaded_file, batch_size=5):
     df = pd.read_excel(uploaded_file, sheet_name="Sheet1")
     total_rows = len(df)
-    processed_batches = []  # To store each processed batch for preview and download
+    processed_batches = []
 
     for start in range(0, total_rows, batch_size):
         end = min(start + batch_size, total_rows)
-        batch_df = df.iloc[start:end].copy()  # Copy to avoid modifying original slice
+        batch_df = df.iloc[start:end].copy()
 
         st.write(f"🔄 Processing rows {start + 1} to {end}...")
 
@@ -363,11 +368,9 @@ def process_uploaded_file(uploaded_file, batch_size=5):
 
         st.success(f"✅ Batch {start + 1} to {end} processed.")
 
-        # Show batch preview
         st.write(f"### Preview: Batch {start + 1} to {end}")
         st.dataframe(batch_df)
 
-        # Save individual batch to memory
         batch_output = io.BytesIO()
         batch_df.to_excel(batch_output, index=False, engine='openpyxl')
         batch_output.seek(0)
@@ -382,10 +385,8 @@ def process_uploaded_file(uploaded_file, batch_size=5):
         processed_batches.append(batch_df)
 
         if end < total_rows:
-            with st.spinner("Waiting 10 seconds before next batch..."):
-                time.sleep(10)
+            time.sleep(10)  # Wait silently between batches
 
-    # Combine all batches into final DataFrame
     final_df = pd.concat(processed_batches, ignore_index=True)
     return final_df
 
@@ -396,21 +397,30 @@ st.title("Underwriting Excel Processor")
 uploaded_file = st.file_uploader("Upload an Excel file", type=["xlsx", "xls"])
 
 if uploaded_file is not None:
-    with st.spinner("Processing file in batches..."):
-        result_df = process_uploaded_file(uploaded_file)
+    # Preview uploaded file before processing
+    with st.expander("📄 Preview Uploaded File"):
+        try:
+            preview_df = pd.read_excel(uploaded_file, sheet_name="Sheet1")
+            st.dataframe(preview_df)
+        except Exception as e:
+            st.error(f"Error reading file: {e}")
 
-    st.success("🎉 All batches processed!")
-    st.write("### Preview: All Data")
-    st.dataframe(result_df)
+    if st.button("🚀 Start Processing"):
+        with st.spinner("Processing file in batches..."):
+            result_df = process_uploaded_file(uploaded_file)
 
-    # Full file download
-    full_output = io.BytesIO()
-    result_df.to_excel(full_output, index=False, engine='openpyxl')
-    full_output.seek(0)
+        st.success("🎉 All batches processed!")
+        st.write("### Preview: All Data")
+        st.dataframe(result_df)
 
-    st.download_button(
-        label="📥 Download Complete Processed File",
-        data=full_output,
-        file_name="processed_output.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+        # Download complete file
+        full_output = io.BytesIO()
+        result_df.to_excel(full_output, index=False, engine='openpyxl')
+        full_output.seek(0)
+
+        st.download_button(
+            label="📥 Download Complete Processed File",
+            data=full_output,
+            file_name="processed_output.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
