@@ -153,7 +153,7 @@ def run_main(df, nml_rules):
 
 
 # Adjust batch size here
-batch_size = 5
+batch_size = 1
 
 # Load rules
 nml_rules = load_rules()
