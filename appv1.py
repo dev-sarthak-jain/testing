@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 
 
 #   Load environement variables and set up LLM
-gemini_api_key = os.getenv("GEMINI_API_KEY")
+gemini_api_key = st.secrets["gemini_api_key"]
 llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", api_key=gemini_api_key)
 
 #   Extracting text from pdf (without LLM Use)
